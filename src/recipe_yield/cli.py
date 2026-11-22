@@ -3,6 +3,7 @@ import json
 import sys
 from .io import load,publish
 from .service import process
+from .preflight import run as preflight_run
 from . import ledger
 
 def _stock(command,argv):
@@ -25,6 +26,16 @@ def main(argv=None):
     argv=list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] in ('stock-init','stock-show','stock-issue'):
         return _stock(argv[0],argv[1:])
+    if argv and argv[0]=='label-preflight':
+        parser=argparse.ArgumentParser(prog='recipe-yield label-preflight')
+        parser.add_argument('--source',required=True)
+        parser.add_argument('--output',required=True)
+        args=parser.parse_args(argv[1:])
+        try:
+            result=preflight_run(load(args.source));publish(args.output,result['report'])
+        except (ValueError,OSError,UnicodeError,RecursionError) as e:
+            print(f'error: {e}',file=sys.stderr);return 2
+        print(json.dumps(result['summary'],ensure_ascii=False,sort_keys=True));return 0
     parser=argparse.ArgumentParser(prog='recipe-yield')
     parser.add_argument('--source',required=True)
     parser.add_argument('--output',required=True)

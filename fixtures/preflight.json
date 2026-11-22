@@ -1,0 +1,101 @@
+{
+  "ingredients": [
+    {
+      "id": "base",
+      "yield": "1",
+      "price_per_gross_gram": "1",
+      "tags": [
+        "local"
+      ]
+    },
+    {
+      "id": "plain",
+      "yield": "1",
+      "price_per_gross_gram": "1",
+      "tags": []
+    }
+  ],
+  "recipes": [
+    {
+      "id": "mix",
+      "output_grams": "4",
+      "components": [
+        {
+          "kind": "ingredient",
+          "ref": "base",
+          "net_grams": "3"
+        },
+        {
+          "kind": "ingredient",
+          "ref": "plain",
+          "net_grams": "1"
+        }
+      ]
+    },
+    {
+      "id": "tray",
+      "output_grams": "8",
+      "components": [
+        {
+          "kind": "recipe",
+          "ref": "mix",
+          "net_grams": "4"
+        },
+        {
+          "kind": "recipe",
+          "ref": "mix",
+          "net_grams": "4"
+        }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": "A",
+      "recipe": "tray",
+      "output_grams": "8"
+    },
+    {
+      "id": "B",
+      "recipe": "tray",
+      "output_grams": "8"
+    }
+  ],
+  "thresholds": [
+    {
+      "tag": "local",
+      "min_share": "0.75"
+    }
+  ],
+  "declarations": [
+    {
+      "order_id": "A",
+      "path": [
+        "tray:0"
+      ],
+      "tag": "local",
+      "action": "suppress"
+    },
+    {
+      "order_id": "A",
+      "path": [
+        "tray:0",
+        "mix:0"
+      ],
+      "tag": "local",
+      "action": "restore"
+    }
+  ],
+  "print_jobs": [
+    {
+      "id": "plate-1",
+      "order_ids": [
+        "A",
+        "B"
+      ],
+      "tags": [
+        "local"
+      ]
+    }
+  ]
+}

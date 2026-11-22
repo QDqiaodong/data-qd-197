@@ -43,6 +43,18 @@ uv pip check --python .venv/bin/python
 
 分配规则、收据格式、提交与恢复语义、严格校验和退出码见 [数据契约](docs/contract.md) 的离线领料契约一节。
 
+## 印前标记核对
+
+印刷站可用 `label-preflight` 离线核对一批订单能否共用同一版商品标记，并解释每个标记来自哪个加工分支：
+
+```sh
+.venv/bin/recipe-yield label-preflight --source fixtures/preflight.json --output run/preflight.json
+```
+
+输入在原 `ingredients`/`recipes`/`orders` 之外，必填 `thresholds`（阈值标记）、`declarations`（按订单与组件路径的 suppress/restore 声明）和 `print_jobs`（现有印版与订单分批）。命令逐订单给出 `total_net`、应印标记与逐标记依据（有效净重、出现次数、第一条有效叶路径），并对每张印刷批给出 `approved` 及逐单的漏印 `missing`/多印 `extra`。这些标记只用于内部商品披露，不用于食品安全或法定合规判断。
+
+核算按子配方标称产出逐层缩放，分母是全部原料叶净重之和；suppress/restore 沿路径继承、最长前缀匹配，共享子配方的一次出现被声明不影响其他出现。反复嵌套的共享配方不会物化全部叶：只沿声明路径显式展开，其余子树记忆化处理，因此不沿用旧命令每订单 20000 条叶的展开上限，45 层指数嵌套（单订单逾 8.7 万亿有效叶）在单次 15 秒时限内完成。字段、口径、报告形状与退出码见 [数据契约](docs/contract.md) 的印前标记核对契约一节。
+
 ## 已执行验证
 
 独立环境离线构建安装、依赖一致性检查、业务测试及安装后的命令行端到端演示通过。另核重复目标、符号链接目标和重复JSON键都返回2，既有输出字节不变，非法输入不发布报告。输出路径必须未存在，重新演示请选新文件名。
