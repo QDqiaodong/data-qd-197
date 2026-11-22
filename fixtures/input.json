@@ -1,0 +1,56 @@
+{
+  "ingredients": [
+    {
+      "id": "tomato",
+      "yield": "0.8",
+      "price_per_gross_gram": "0.02",
+      "tags": [
+        "plant"
+      ]
+    },
+    {
+      "id": "cream",
+      "yield": "1",
+      "price_per_gross_gram": "0.05",
+      "tags": [
+        "milk"
+      ]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "sauce",
+      "output_grams": "100",
+      "components": [
+        {
+          "kind": "ingredient",
+          "ref": "tomato",
+          "net_grams": "80"
+        },
+        {
+          "kind": "ingredient",
+          "ref": "cream",
+          "net_grams": "40"
+        }
+      ]
+    },
+    {
+      "id": "soup",
+      "output_grams": "200",
+      "components": [
+        {
+          "kind": "recipe",
+          "ref": "sauce",
+          "net_grams": "200"
+        }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": "lunch",
+      "recipe": "soup",
+      "output_grams": "400"
+    }
+  ]
+}
