@@ -93,3 +93,44 @@ ISSUE.json 含原核算的 `ingredients`、`recipes`、`orders`（校验与数�
 ## 严格性与退出码
 
 重复 JSON 键、未知字段、错误类型、越界数组、非法标识、无效引用或声明路径、重复身份（阈值标记、声明三元组、印刷批 id、订单的批归属）以及无法安全发布报告等情况一律退出 2，stderr 给出可辨原因，且不留下半份报告。成功退出 0。
+
+# 返工对账契约
+
+`recipe-yield rework-reconcile --source FILE --output REPORT` 在只读核算之外提供离线返工对账：根据实物流而非理论配方，重建某次内部质量核查当时能看到的结果，对比后来登记的结果，给出包件暂扣、已发包件追查与订单补货建议。它只供内部运营调度，不作食品安全或合规判断；不访问领料库，不改写任何收据或领料状态，原核算、`stock-*` 与 `label-preflight` 契约均保持不变。
+
+## 输入与身份
+
+输入是含 `receipts`、`orders`、`events`、`lot_ids`、`compare_to`、`as_known` 六个必填字段的 JSON 对象，沿用原标识符语法、十进制数量语法与 8MB 上限：
+
+- `receipts`：1–100 张原 `stock-issue` 成功收据，逐字段沿用其类型（`request_id`、`use_on`、`total_cost`、`lines`，线内 `order_id`、`path`、`ingredient`、`net`、`gross`、`trim`、`cost`、`tags`、`draws`，笔内 `lot_id`、`gross`、`cost`）。收据中的数量是发料时写出的精确值，可为整数或约分后的 `n/d` 字符串，原样精确读取，不转成小数。`request_id` 在本次归档中唯一。同一 `(request_id, lot_id)` 的可用毛重是该收据所有相应 `draws.gross` 之和，不是全局批次余额；一张收据的额度不能挪给另一张收据。拒绝重复叶身份 `(order_id,path)`、同叶重复 `lot_id`、非正领用量，以及某叶 `draws.gross` 之和与 `line.gross` 不符的收据。由上游归档提供，不联网验真、不还原目录、不重算单价。
+- `orders`：1–100 条 `{id,demand_grams}`，`id` 唯一，`demand_grams` 为正十进制字符串。这是发运订单，与收据中的加工工单属于不同命名空间。
+- `lot_ids`：1–30 个不重复待核原料批次，每个须至少出现在一张收据的 `draws` 中。
+- `events`：0–5000 条，数组位置即登记顺序（从 1 开始）。记录 `id` 在可见范围内全局唯一，各类 `id` 共用一个命名空间。
+- `compare_to`、`as_known`：JSON 整数，`0 <= compare_to <= as_known <= len(events)`；0 表示尚无记录。只处理截至 `as_known` 的前缀，其后记录不参与校验与结论；收据与订单是两个截点共享的固定背景。
+
+记录四类：
+
+- `{id,kind:"mix",inputs,output_grams}`：投料均匀混成一批半成品，`id` 即半成品身份。`inputs` 为 1–30 条，每条是 `{request_id,lot_id,grams}`（取自领料收据）或 `{mix_id,grams}`（取自早于本批已生产的半成品）；同组内同一来源身份不得重复。`output_grams` 非负且不得超过投料总重，差额是工序失重。
+- `{id,kind:"pack",mix_id,order_id,grams}`：从已生产的半成品分出一个包件，归给指定订单；`id` 即包件身份，包件不可再拆。`mix_id` 须引用登记位置不晚于该条的 mix，`order_id` 须为输入订单。
+- `{id,kind:"ship",parcel_id}`：记录已发生的发运，须引用之前登记的包件，每包件至多发运一次；不扣半成品。对账不因当时本可暂扣而抹掉发运事实。
+- `{id,kind:"amend",mix_id,inputs}`：最多 25 条。一次替换某已登记 mix 的整组投料来源与分量；**投料总重、原 mix 的位置与产出重不变**。新组内的半成品来源仍须早于被更正的 mix（而不是只早于这条 amend）。后一次更正替换前一次，不叠加扣料。更正从自己登记的位置起可知，不能改写更早截点的报告。
+
+## 实物流约束
+
+在任一可见记录前缀，以当时已知的更正重建实物流：同一收据来源累计投料不得超过其额度；同批半成品被后续混拌与打包取走的总量不得超过产出；更正须同时撤销旧组占用并计入新组，还要为当时已登记的其他用途留足量。任一可见前缀不合法即拒绝，不能靠后续更正掩盖中间超用。尚未使用的余额允许存在，不算交付。
+
+## 归因与对账
+
+命中 `lot_ids` 的收据材料按全重归入待核来源，其他收据材料按零计。每次混拌按混合前的实际投料重量比例传递归因，失重按相同比例分摊（投料比例 `r`、产出 `G` 则本批归因 `G*r`；此后取走 `g` 归因 `g*r`）。同一来源沿多路进入同一批时各路的实际投料份额都计入，不按有无路径去重、也不把整批重量算成来源重量。所有重量精确，报告用约分后的整数或 `n/d` 字符串。
+
+分别在 `compare_to` 与 `as_known` 两个截点，为每个已登记包件计算归因克数。归因大于零时，已发包件为 `trace`、未发包件为 `hold`；归因等于零时，已发为 `shipped_clear`、未发为 `ready`。订单按**整包毛重**（不是归因克数）分四类累计，补货缺口为 `max(0, demand_grams - shipped_clear - ready)`，同一包件只计一次，超额交付不报负缺口。
+
+## 报告与退出码
+
+成功后只发布一份新 JSON 到未存在的 `--output`（目标已存在、为目录或符号链接时失败返回 2，不覆盖、不留半份报告），stdout 打印单行摘要 `{"changes":...,"orders":...,"parcels":...}`。报告为 `{before,after,action_changes}`，`before`/`after` 各含按 id ASCII 排序的 `parcels` 与 `orders`：
+
+- 包件 `{id,order_id,grams,attributed_grams,action}`。
+- 订单 `{id,demand_grams,ready,shipped_clear,hold,trace,gap_grams}`，无包件订单同样列出。
+- `action_changes` 仅列处置变动，按包件 id 排序，项为 `{id,before,after}`；新增包件的 `before` 为 `null`；归因改变而处置不变不列。
+
+正常的暂扣与缺口是结果，不是输入错误。重复 JSON 键、可见范围内未知字段、错误类型、非法引用、违反实物约束及无法发布等情况一律退出 2，stderr 给出可辨原因，且不覆盖既有文件、不留半份报告。

@@ -1,0 +1,200 @@
+{
+  "receipts": [
+    {
+      "request_id": "R1",
+      "use_on": "2027-01-01",
+      "total_cost": "0",
+      "lines": [
+        {
+          "order_id": "O",
+          "path": [
+            "x:0"
+          ],
+          "ingredient": "flour",
+          "net": "4",
+          "gross": "4",
+          "trim": "0",
+          "cost": "0",
+          "tags": [],
+          "draws": [
+            {
+              "lot_id": "A",
+              "gross": "4",
+              "cost": "0"
+            }
+          ]
+        },
+        {
+          "order_id": "O",
+          "path": [
+            "x:1"
+          ],
+          "ingredient": "flour",
+          "net": "4",
+          "gross": "4",
+          "trim": "0",
+          "cost": "0",
+          "tags": [],
+          "draws": [
+            {
+              "lot_id": "B",
+              "gross": "4",
+              "cost": "0"
+            }
+          ]
+        },
+        {
+          "order_id": "O",
+          "path": [
+            "x:2"
+          ],
+          "ingredient": "flour",
+          "net": "7",
+          "gross": "7",
+          "trim": "0",
+          "cost": "0",
+          "tags": [],
+          "draws": [
+            {
+              "lot_id": "C",
+              "gross": "7",
+              "cost": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "R2",
+      "use_on": "2027-01-01",
+      "total_cost": "0",
+      "lines": [
+        {
+          "order_id": "O",
+          "path": [
+            "y:0"
+          ],
+          "ingredient": "flour",
+          "net": "1",
+          "gross": "1",
+          "trim": "0",
+          "cost": "0",
+          "tags": [],
+          "draws": [
+            {
+              "lot_id": "A",
+              "gross": "1",
+              "cost": "0"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": "O",
+      "demand_grams": "5"
+    }
+  ],
+  "events": [
+    {
+      "id": "M0",
+      "kind": "mix",
+      "inputs": [
+        {
+          "request_id": "R1",
+          "lot_id": "A",
+          "grams": "4"
+        },
+        {
+          "request_id": "R1",
+          "lot_id": "C",
+          "grams": "4"
+        }
+      ],
+      "output_grams": "6"
+    },
+    {
+      "id": "M1",
+      "kind": "mix",
+      "inputs": [
+        {
+          "mix_id": "M0",
+          "grams": "2"
+        },
+        {
+          "request_id": "R2",
+          "lot_id": "A",
+          "grams": "1"
+        },
+        {
+          "request_id": "R1",
+          "lot_id": "C",
+          "grams": "1"
+        }
+      ],
+      "output_grams": "3"
+    },
+    {
+      "id": "M2",
+      "kind": "mix",
+      "inputs": [
+        {
+          "request_id": "R1",
+          "lot_id": "C",
+          "grams": "2"
+        }
+      ],
+      "output_grams": "2"
+    },
+    {
+      "id": "P1",
+      "kind": "pack",
+      "mix_id": "M1",
+      "order_id": "O",
+      "grams": "1"
+    },
+    {
+      "id": "P2",
+      "kind": "pack",
+      "mix_id": "M0",
+      "order_id": "O",
+      "grams": "2"
+    },
+    {
+      "id": "P3",
+      "kind": "pack",
+      "mix_id": "M2",
+      "order_id": "O",
+      "grams": "2"
+    },
+    {
+      "id": "S1",
+      "kind": "ship",
+      "parcel_id": "P1"
+    },
+    {
+      "id": "AM1",
+      "kind": "amend",
+      "mix_id": "M0",
+      "inputs": [
+        {
+          "request_id": "R1",
+          "lot_id": "B",
+          "grams": "4"
+        },
+        {
+          "request_id": "R1",
+          "lot_id": "C",
+          "grams": "4"
+        }
+      ]
+    }
+  ],
+  "lot_ids": [
+    "A"
+  ],
+  "compare_to": 7,
+  "as_known": 8
+}

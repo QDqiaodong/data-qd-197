@@ -5,6 +5,7 @@ from .io import load,publish
 from .service import process
 from .preflight import run as preflight_run
 from . import ledger
+from .rework import reconcile
 
 def _stock(command,argv):
     parser=argparse.ArgumentParser(prog=f'recipe-yield {command}')
@@ -36,6 +37,19 @@ def main(argv=None):
         except (ValueError,OSError,UnicodeError,RecursionError) as e:
             print(f'error: {e}',file=sys.stderr);return 2
         print(json.dumps(result['summary'],ensure_ascii=False,sort_keys=True));return 0
+    if argv and argv[0]=='rework-reconcile':
+        parser=argparse.ArgumentParser(prog='recipe-yield rework-reconcile')
+        parser.add_argument('--source',required=True)
+        parser.add_argument('--output',required=True)
+        args=parser.parse_args(argv[1:])
+        try:
+            report=reconcile(load(args.source));publish(args.output,report)
+        except (ValueError,OSError,UnicodeError,RecursionError) as e:
+            print(f'error: {e}',file=sys.stderr);return 2
+        print(json.dumps({'parcels':len(report['before']['parcels']),
+                          'changes':len(report['action_changes']),
+                          'orders':len(report['before']['orders'])},
+                         ensure_ascii=False,sort_keys=True));return 0
     parser=argparse.ArgumentParser(prog='recipe-yield')
     parser.add_argument('--source',required=True)
     parser.add_argument('--output',required=True)

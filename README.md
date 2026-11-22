@@ -43,6 +43,18 @@ uv pip check --python .venv/bin/python
 
 分配规则、收据格式、提交与恢复语义、严格校验和退出码见 [数据契约](docs/contract.md) 的离线领料契约一节。
 
+## 返工对账
+
+中央厨房可用 `rework-reconcile` 离线重建某次内部质量核查的实物流，对比后来登记的更正，告诉仓库哪些包件该暂扣、哪些已发包件需要追查、哪些订单要准备补货：
+
+```sh
+.venv/bin/recipe-yield rework-reconcile --source fixtures/rework.json --output run/rework.json
+```
+
+输入由原 `stock-issue` 收据、发运订单、登记事件（`mix`/`pack`/`ship`/`amend`）、待核批次与两个截点 `compare_to`/`as_known` 组成。命令按实际投料而非理论配方传递归因，在任一可见前缀校验收据额度与半成品产出不透支，分别给出两个截点的包件处置与订单缺口，并列出处置变动。它只供内部运营调度，不作食品安全或合规判断；不改写任何收据或领料库。
+
+以上样例比较第 7 与第 8 条：第 8 条把 M0 由 A4+C4 改为 B4+C4，包件 P2 由 `hold`（归因 1）变为 `ready`（归因 0），是唯一处置变动；订单缺口由 3 降到 1。`fixtures/rework-overdraw.json` 演示后续更正掩盖不了第 9 条的 C 超额，命令退出 2 且不发报告。字段、身份、归因口径、报告形状与退出码见 [数据契约](docs/contract.md) 的返工对账契约一节。
+
 ## 印前标记核对
 
 印刷站可用 `label-preflight` 离线核对一批订单能否共用同一版商品标记，并解释每个标记来自哪个加工分支：

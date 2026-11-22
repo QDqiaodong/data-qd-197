@@ -19,7 +19,11 @@ def load(path):
 
 def publish(path,result):
     payload=(json.dumps(result,ensure_ascii=False,sort_keys=True,indent=2,allow_nan=False)+'\n').encode('utf-8')
-    target=Path(path);target.parent.mkdir(parents=True,exist_ok=True);temporary=None
+    target=Path(path)
+    # A target that already exists (file, directory or symlink) must never be
+    # overwritten, even when the run is repeated with identical content.
+    if target.exists() or target.is_symlink():raise ValueError(f'output already exists: {target}')
+    target.parent.mkdir(parents=True,exist_ok=True);temporary=None
     try:
         with tempfile.NamedTemporaryFile(dir=target.parent,prefix='.publish-',delete=False) as f:
             temporary=Path(f.name);f.write(payload);f.flush();os.fsync(f.fileno())
