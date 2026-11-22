@@ -1,3 +1,4 @@
+import datetime
 import re
 from fractions import Fraction
 
@@ -25,4 +26,16 @@ def number(value):
     if not isinstance(value,str) or not re.fullmatch(r'-?(?:0|[1-9][0-9]{0,8})(?:[.][0-9]{1,6})?',value):raise ValueError('bounded decimal string required')
     return Fraction(value)
 
+def rational(value):
+    # Reduced integer or n/d string as emitted by str(Fraction); used for
+    # ledger state quantities, which need not fit the input decimal syntax.
+    if not isinstance(value,str) or not re.fullmatch(r'-?[0-9]+(?:/[1-9][0-9]*)?',value):raise ValueError('rational string required')
+    return Fraction(value)
+
 def vector(value,size):return tuple(number(x) for x in array(value,size,size))
+
+def date(value):
+    if not isinstance(value,str) or not re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}',value):raise ValueError('invalid date')
+    try:datetime.date.fromisoformat(value)
+    except ValueError:raise ValueError('invalid date')
+    return value

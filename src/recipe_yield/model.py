@@ -1,7 +1,7 @@
 from .checks import fields,array,ident,unique,number
 
-def parse(data):
-    fields(data,('ingredients','recipes','orders'))
+def parse(data,extra=()):
+    fields(data,('ingredients','recipes','orders')+tuple(extra))
     ingredients={};recipes={};orders=[]
     for item in array(data['ingredients'],1,100):
         fields(item,('id','yield','price_per_gross_gram','tags'))

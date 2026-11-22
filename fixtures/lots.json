@@ -1,0 +1,34 @@
+{
+  "lots": [
+    {
+      "lot_id": "A",
+      "ingredient": "flour",
+      "expires_on": "2027-01-01",
+      "gross_grams": "8",
+      "price_per_gross_gram": "2",
+      "tags": [
+        "plant"
+      ]
+    },
+    {
+      "lot_id": "B",
+      "ingredient": "flour",
+      "expires_on": "2027-01-02",
+      "gross_grams": "8",
+      "price_per_gross_gram": "3",
+      "tags": [
+        "shared"
+      ]
+    },
+    {
+      "lot_id": "C",
+      "ingredient": "flour",
+      "expires_on": "2027-01-03",
+      "gross_grams": "8",
+      "price_per_gross_gram": "4",
+      "tags": [
+        "reserve"
+      ]
+    }
+  ]
+}

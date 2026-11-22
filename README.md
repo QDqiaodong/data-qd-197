@@ -29,9 +29,25 @@ uv pip check --python .venv/bin/python
 
 完整证据写入 `run/demo.json`。数值输入为契约约定的十进制字符串或整数分数对，输出的精确有理数采用整数或 `n/d` 字符串，避免浮点舍入。
 
+## 离线领料
+
+在只读核算之外，CLI 可管理一个本地领料库，按工单从在库批次整单发料：
+
+```sh
+.venv/bin/recipe-yield stock-init --ledger run/ledger --source fixtures/lots.json
+.venv/bin/recipe-yield stock-show --ledger run/ledger
+.venv/bin/recipe-yield stock-issue --ledger run/ledger --source fixtures/issue.json
+```
+
+`stock-init` 只创建新库，不覆盖已有路径；`stock-show` 打印各批次余额（含零余额批次）且不扣料；`stock-issue` 成功时在 stdout 打印逐叶收据并原子提交扣减，缺货或请求冲突返回2。同 ID 同内容重试返回逐字节相同的原始收据且不重复扣料；同 ID 不同内容拒绝。库目录可被同机多个进程并发使用，提交等价于某个串行顺序。领料样例中第二叶禁用 `shared` 标记，第一叶领 B 批 8 克、第二叶领 A 批 8 克，总成本 40，C 批不扣。
+
+分配规则、收据格式、提交与恢复语义、严格校验和退出码见 [数据契约](docs/contract.md) 的离线领料契约一节。
+
 ## 已执行验证
 
-独立环境离线构建安装、依赖一致性检查、6项业务测试及安装后的命令行端到端演示通过。另核重复目标、符号链接目标和重复JSON键都返回2，既有输出字节不变，非法输入不发布报告。输出路径必须未存在，重新演示请选新文件名。
+独立环境离线构建安装、依赖一致性检查、业务测试及安装后的命令行端到端演示通过。另核重复目标、符号链接目标和重复JSON键都返回2，既有输出字节不变，非法输入不发布报告。输出路径必须未存在，重新演示请选新文件名。
+
+领料模式另由 tests/test_stock.py 覆盖：受限路径不抢占受限叶唯一可用批次、批次到期日边界、拆分领用分数、缺货整单拒绝且不占用 request_id、重试幂等、并发争用与并发同请求、提交前后进程终止的恢复，以及原命令兼容性。分配算法另用随机小实例与暴力枚举字典序规则交叉核对。
 
 源码入口为 `src/recipe_yield/service.py`，测试在 `tests/`。业务字段、身份、单位、界限和失败约定见 [数据契约](docs/contract.md)。样例全部为原创合成数据，见 [样例来源](fixtures/SOURCES.md)，源码和样例采用MIT许可。
 
