@@ -1,0 +1,9 @@
+{
+  "lots": [
+    {
+      "lot_id": "L",
+      "ingredient": "flour",
+      "received_grams": "7"
+    }
+  ]
+}

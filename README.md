@@ -55,6 +55,24 @@ uv pip check --python .venv/bin/python
 
 以上样例比较第 7 与第 8 条：第 8 条把 M0 由 A4+C4 改为 B4+C4，包件 P2 由 `hold`（归因 1）变为 `ready`（归因 0），是唯一处置变动；订单缺口由 3 降到 1。`fixtures/rework-overdraw.json` 演示后续更正掩盖不了第 9 条的 C 超额，命令退出 2 且不发报告。字段、身份、归因口径、报告形状与退出码见 [数据契约](docs/contract.md) 的返工对账契约一节。
 
+## 货款结算
+
+财务可以用 `settle-*` 三个离线命令维护一个独立的结算账本，把供应商按批次的累计确认货款分摊给实际领用的加工工单和剩余库存，只把期际差额封进凭证：
+
+```sh
+.venv/bin/recipe-yield settle-init   --book run/settle --source settle-lots.json
+.venv/bin/recipe-yield settle-close  --book run/settle --source close-1.json
+.venv/bin/recipe-yield settle-export --book run/settle --period p1 --output run/voucher-p1.json
+```
+
+- `settle-init` 用 `{lots:[{lot_id,ingredient,received_grams}]}` 建账，批次表 1–200 条、lot_id 唯一、`received_grams` 为正十进制毛重字符串；账本路径已存在即拒绝，不覆盖。批次表建后不改写、不追加，不处理退料。
+- `settle-close` 输入 `{period,previous,receipts,confirmed}`。`receipts` 是 0–100 张原 `stock-issue` 实领收据（不读领料库、不用收据估价）；`confirmed` 每批恰好一条 `{lot_id,cents}`，cents 是截至本期的累计确认分（0 至 10¹² 的 JSON 整数，可下调）。成功在 stdout 返回 `{period,previous}`，凭证只封存在账本内，不直接写投递文件。
+- `settle-export` 把指定已结期凭证交付到输出路径：新路径重复导出逐字节相同；已有普通文件只有字节完全一致才算成功；目录、符号链接一律拒绝；失败不撤销结账。
+
+分摊以批次为单位独立计算：归档收据的 `draws.gross` 按加工工单 ID 跨路径、跨收据合并，未领库存权重为买入毛重减累计领用；按重量占买入毛重的比例用最大余数法分整数分，余数同分按 order_id ASCII、库存桶排在工单之后，零重量桶不参与。凭证 entries 是本期累计目标分摊相对上期封存值的**有符号差额**（负差额不截零），库存桶用 `order_id:null`，零差额不列。累计领用超买入毛重、跨期重报 request_id、同收据内重复叶身份 `(order_id,path)`、未知批次或原料不符等整单拒绝，且不移动结账位置。
+
+相同 period 同内容重试返回原结果且不再消耗收据（即使 previous 已不是链头）；同 period 不同内容拒绝；并发争用同一 previous 最多一笔成功。提交前进程终止不留占用的 period、收据或凭证；提交后 stdout 丢失也可重试或继续结下一期。期次链允许在前期凭证尚未投递时继续结账，财务凭凭证内 previous 识别入账顺序。字段、口径、恢复与退出码见 [数据契约](docs/contract.md) 的货款结算契约一节。
+
 ## 印前标记核对
 
 印刷站可用 `label-preflight` 离线核对一批订单能否共用同一版商品标记，并解释每个标记来自哪个加工分支：
@@ -72,6 +90,8 @@ uv pip check --python .venv/bin/python
 独立环境离线构建安装、依赖一致性检查、业务测试及安装后的命令行端到端演示通过。另核重复目标、符号链接目标和重复JSON键都返回2，既有输出字节不变，非法输入不发布报告。输出路径必须未存在，重新演示请选新文件名。
 
 领料模式另由 tests/test_stock.py 覆盖：受限路径不抢占受限叶唯一可用批次、批次到期日边界、拆分领用分数、缺货整单拒绝且不占用 request_id、重试幂等、并发争用与并发同请求、提交前后进程终止的恢复，以及原命令兼容性。分配算法另用随机小实例与暴力枚举字典序规则交叉核对。
+
+结算模式由 tests/test_settle.py 覆盖：精确分数重量与最大余数同余（库存桶排在同分工单后）、三期目标分摊的跨期冲减与负差额、直接消费 `stock-issue` 原始收据、档案身份（叶身份、同叶批次、request_id 跨期/同请求重复、未知批次与原料不符）、超重拒绝不移动结账位置、同 period 幂等与内容冲突、链头约束、导出字节一致与目录/符号链接/异文件拒绝，以及提交前后与投递后的中断恢复和同 previous 并发争用（故障注入点 `RECIPE_YIELD_CRASHPOINT`，不靠休眠）。
 
 源码入口为 `src/recipe_yield/service.py`，测试在 `tests/`。业务字段、身份、单位、界限和失败约定见 [数据契约](docs/contract.md)。样例全部为原创合成数据，见 [样例来源](fixtures/SOURCES.md)，源码和样例采用MIT许可。
 

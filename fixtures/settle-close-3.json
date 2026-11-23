@@ -1,0 +1,36 @@
+{
+  "period": "p3",
+  "previous": "p2",
+  "receipts": [
+    {
+      "request_id": "R3",
+      "use_on": "2027-01-01",
+      "total_cost": "0",
+      "lines": [
+        {
+          "order_id": "C",
+          "path": ["rc:0"],
+          "ingredient": "flour",
+          "net": "1",
+          "gross": "1",
+          "trim": "0",
+          "cost": "0",
+          "tags": [],
+          "draws": [
+            {
+              "lot_id": "L",
+              "gross": "1",
+              "cost": "0"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "confirmed": [
+    {
+      "lot_id": "L",
+      "cents": 3
+    }
+  ]
+}

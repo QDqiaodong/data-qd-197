@@ -1,0 +1,70 @@
+{
+  "period": "p1",
+  "previous": null,
+  "receipts": [
+    {
+      "request_id": "R1",
+      "use_on": "2027-01-01",
+      "total_cost": "0",
+      "lines": [
+        {
+          "order_id": "A",
+          "path": ["ra:0"],
+          "ingredient": "flour",
+          "net": "2",
+          "gross": "2",
+          "trim": "0",
+          "cost": "0",
+          "tags": [],
+          "draws": [
+            {
+              "lot_id": "L",
+              "gross": "2",
+              "cost": "0"
+            }
+          ]
+        },
+        {
+          "order_id": "A",
+          "path": ["ra:1"],
+          "ingredient": "flour",
+          "net": "1",
+          "gross": "1",
+          "trim": "0",
+          "cost": "0",
+          "tags": [],
+          "draws": [
+            {
+              "lot_id": "L",
+              "gross": "1",
+              "cost": "0"
+            }
+          ]
+        },
+        {
+          "order_id": "B",
+          "path": ["rb:0"],
+          "ingredient": "flour",
+          "net": "3",
+          "gross": "3",
+          "trim": "0",
+          "cost": "0",
+          "tags": [],
+          "draws": [
+            {
+              "lot_id": "L",
+              "gross": "3",
+              "cost": "0"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "confirmed": [
+    {
+      "lot_id": "L",
+      "cents": 3
+    }
+  ]
+}

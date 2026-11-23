@@ -1,0 +1,11 @@
+{
+  "period": "p2",
+  "previous": "p1",
+  "receipts": [],
+  "confirmed": [
+    {
+      "lot_id": "L",
+      "cents": 4
+    }
+  ]
+}
